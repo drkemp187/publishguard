@@ -1,0 +1,27 @@
+# Example: block worm-spread at publish time using PublishGuard as a
+# GitHub Action. Drop this into .github/workflows/ in YOUR package repo.
+name: PublishGuard
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  publishguard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run PublishGuard
+        uses: drkemp187/publishguard@main
+        with:
+          strict: 'false'
+          sarif: 'publishguard.sarif'
+      - name: Upload SARIF to code scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: publishguard.sarif

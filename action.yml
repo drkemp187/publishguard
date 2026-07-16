@@ -1,0 +1,27 @@
+name: 'PublishGuard'
+description: 'Pre-publish worm tripwire for npm — block self-replicating supply-chain worms before they spread.'
+branding:
+  icon: 'shield'
+  color: 'red'
+inputs:
+  dir:
+    description: 'Package root to scan'
+    required: false
+    default: '.'
+  strict:
+    description: 'Fail on any finding (not just HIGH+)'
+    required: false
+    default: 'false'
+  sarif:
+    description: 'Path to write SARIF output (optional)'
+    required: false
+    default: ''
+runs:
+  using: 'composite'
+  steps:
+    - shell: bash
+      run: |
+        ARGS="check --dir '${{ inputs.dir }}'"
+        if [ "${{ inputs.strict }}" = "true" ]; then ARGS="$ARGS --strict"; fi
+        if [ -n "${{ inputs.sarif }}" ]; then ARGS="$ARGS --sarif '${{ inputs.sarif }}'"; fi
+        node "${{ github.action_path }}/bin/publishguard.js" $ARGS
