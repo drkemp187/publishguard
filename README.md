@@ -41,11 +41,15 @@ PublishGuard breaks that replication step.
 
 ## Quick start
 
+Until the first npm release lands, run it straight from GitHub:
+
 ```bash
-npx publishguard check                 # scan the current package
-npx publishguard baseline              # snapshot current lifecycle scripts as known-good
-npx publishguard check --sarif out.sarif
+npx github:drkemp187/publishguard check      # scan the current package
+npx github:drkemp187/publishguard baseline   # snapshot current lifecycle scripts as known-good
+npx github:drkemp187/publishguard check --sarif out.sarif
 ```
+
+(Once published to npm this becomes plain `npx publishguard check`.)
 
 Wire it into your package so a publish is **blocked** if anything looks wormy:
 
@@ -70,6 +74,20 @@ Or drop the GitHub Action into `.github/workflows/` (see `examples/`).
 | `PG005` self-publish | CRITICAL | Code invoking `npm publish` / registry publish API |
 | `PG006` network-exfil | HIGH | Beacons to raw IPs, `webhook.site`, known C2 patterns |
 | `PG007` obfuscated-payload | MEDIUM | `eval`/`Function`/base64-`Buffer` decode of remote strings |
+
+## Threat model — what this does and doesn't stop
+
+PublishGuard is a tripwire against **automated, non-targeted worms** — malware
+that injects the same replication payload into every package it can reach. That
+class of attack doesn't adapt per-repository, so a local check it doesn't know
+about breaks the chain.
+
+It is **not** a defense against a targeted attacker with commit access: anyone
+who can edit `package.json` to inject a lifecycle script can also remove the
+`prepublishOnly` hook or regenerate the baseline. For that threat you need
+protections PublishGuard can't provide — 2FA on npm, provenance/trusted
+publishing, protected branches, and review requirements. Run PublishGuard in CI
+(not only locally) so removing the hook is at least visible in the diff.
 
 ## False positives & suppression
 
