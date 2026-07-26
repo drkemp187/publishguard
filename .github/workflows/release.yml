@@ -1,0 +1,59 @@
+name: Release
+
+# Publishes to npm with provenance attestation.
+#
+# Auth uses npm "trusted publishing" (OIDC) — there is no NPM_TOKEN secret.
+# One-time setup required on npmjs.com before the first run:
+#   npmjs.com -> @black-lotus/publishguard -> Settings -> Trusted Publisher
+#   Provider:  GitHub Actions
+#   Owner/repo: drkemp187/publishguard
+#   Workflow:  release.yml
+#
+# Release flow:
+#   npm version patch   # or minor / major — creates the commit + tag
+#   git push --follow-tags
+# Pushing the v* tag triggers this workflow.
+
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write      # required for both OIDC auth and provenance
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      # Trusted publishing + provenance requires npm >= 11.5.1
+      - name: Upgrade npm
+        run: npm install -g npm@latest
+
+      - name: Run test suite
+        run: node test/test.js
+
+      # Eat our own dog food: PublishGuard gates its own release.
+      # If this exits non-zero the publish never happens.
+      - name: PublishGuard self-check
+        run: node bin/publishguard.js check --strict
+
+      - name: Verify tag matches package.json version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$pkg" ]; then
+            echo "Tag v$tag does not match package.json version $pkg"; exit 1
+          fi
+          echo "Version $pkg confirmed"
+        if: github.event_name == 'push'
+
+      - name: Publish with provenance
+        run: npm publish --provenance --access public
