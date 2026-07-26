@@ -41,15 +41,22 @@ PublishGuard breaks that replication step.
 
 ## Quick start
 
-Until the first npm release lands, run it straight from GitHub:
-
 ```bash
-npx github:drkemp187/publishguard check      # scan the current package
-npx github:drkemp187/publishguard baseline   # snapshot current lifecycle scripts as known-good
-npx github:drkemp187/publishguard check --sarif out.sarif
+npm install -g @black-lotus/publishguard
+
+publishguard check                      # scan the current package
+publishguard baseline                   # snapshot current lifecycle scripts as known-good
+publishguard check --sarif out.sarif
 ```
 
-(Once published to npm this becomes plain `npx publishguard check`.)
+Or without installing:
+
+```bash
+npx @black-lotus/publishguard check
+```
+
+The package is published under the `@black-lotus` scope; the CLI command is
+plain `publishguard`.
 
 Wire it into your package so a publish is **blocked** if anything looks wormy:
 
