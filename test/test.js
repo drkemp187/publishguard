@@ -7,8 +7,8 @@ const { scanPackage, toSarif } = require('../lib/scanner');
 
 let passed = 0, failed = 0;
 function test(name, fn) {
-  try { fn(); passed++; console.log('  \u2713 ' + name); }
-  catch (e) { failed++; console.log('  \u2717 ' + name + '\n      ' + e.message); }
+  try { fn(); passed++; console.log('  ✓ ' + name); }
+  catch (e) { failed++; console.log('  ✗ ' + name + '\n      ' + e.message); }
 }
 
 console.log('\nPublishGuard tests\n');
@@ -32,6 +32,11 @@ test('detects exfil beacon (PG006)', () => {
 test('detects obfuscated eval payload (PG007)', () => {
   const f = scanText("eval(Buffer.from(x,'base64').toString())");
   assert.ok(f.some(x => x.rule === 'PG007'));
+});
+
+test('detects hardcoded secret (PG008)', () => {
+  const f = scanText('const token = "AKIA1234567890ABCDEF";');
+  assert.ok(f.some(x => x.rule === 'PG008'));
 });
 
 test('clean code produces no findings', () => {
@@ -70,6 +75,11 @@ test('malicious fixture triggers CRITICAL and blocks', () => {
   assert.ok(rules.has('PG005'), 'self-publish');
 });
 
+test('secret fixture triggers PG008', () => {
+  const { findings } = scanPackage(path.join(__dirname, 'fixtures', 'secret-leak'));
+  assert.ok(findings.some(f => f.rule === 'PG008'), 'hardcoded secret should be flagged');
+});
+
 test('clean fixture produces zero findings', () => {
   const { findings } = scanPackage(path.join(__dirname, 'fixtures', 'clean'));
   assert.strictEqual(findings.length, 0);
@@ -82,7 +92,6 @@ test('files allowlist limits scan to publishable paths', () => {
     JSON.stringify({ name: 'x', version: '1.0.0', files: ['lib'] }));
   fs.mkdirSync(path.join(dir, 'lib'));
   fs.writeFileSync(path.join(dir, 'lib', 'ok.js'), 'module.exports = 1;');
-  // A worm-looking file that is NOT in "files" -> must be ignored.
   fs.writeFileSync(path.join(dir, 'scratch.js'), "require('child_process').execSync('npm publish')");
   const { findings } = scanPackage(dir);
   assert.strictEqual(findings.length, 0, 'non-published file should not be scanned');
