@@ -13,13 +13,13 @@ protects the **supply itself** — it stops *your* package from becoming the nex
 link in a worm's replication chain.
 
 - 🔒 **Zero dependencies. Zero network calls.** Pure Node stdlib. A supply-chain
-  tool should not itself be a supply-chain risk.
+tool should not itself be a supply-chain risk.
 - 🧬 **Baseline-diff detection.** Flags lifecycle scripts (`postinstall`,
   `prepublish`, `prepare`, …) that appeared or changed since your last
   known-good commit — the #1 worm injection vector.
 - 🕵️ **Behavioral static analysis.** Detects token theft (`~/.npmrc`,
-  `NPM_TOKEN`, `NODE_AUTH_TOKEN`), credential harvesting, self-`npm publish`,
-  and exfil beacons in what you're *about to ship*.
+  `NPM_TOKEN`, `NODE_AUTH_TOKEN`), hardcoded AWS/GitHub/Slack tokens, credential
+  harvesting, self-`npm publish`, and exfil beacons in what you're *about to ship*.
 - 🚦 **Blocks the publish.** Exits non-zero so CI/`prepublishOnly` halts before
   a compromised artifact ever reaches the registry.
 - 📤 **SARIF output.** Findings ingest natively into GitHub code scanning.
@@ -81,6 +81,7 @@ Or drop the GitHub Action into `.github/workflows/` (see `examples/`).
 | `PG005` self-publish | CRITICAL | Code invoking `npm publish` / registry publish API |
 | `PG006` network-exfil | HIGH | Beacons to raw IPs, `webhook.site`, known C2 patterns |
 | `PG007` obfuscated-payload | MEDIUM | `eval`/`Function`/base64-`Buffer` decode of remote strings |
+| `PG008` hardcoded-secret | CRITICAL | AWS keys, GitHub/Slack tokens, private keys, API secrets stored in package code |
 
 ## Threat model — what this does and doesn't stop
 
